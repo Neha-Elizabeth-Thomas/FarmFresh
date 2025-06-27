@@ -65,6 +65,20 @@ const sellerProfileSchema = new mongoose.Schema({
   },
 }, { _id: false });
 
+const cartItemSchema = new mongoose.Schema({
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1,
+  },
+}, { _id: false });
+
 const userSchema=new mongoose.Schema({
     name:{
         type:String,
@@ -92,7 +106,7 @@ const userSchema=new mongoose.Schema({
     enum: ['buyer', 'seller', 'admin'],
     default: ['buyer']
   },
-
+  cart: [cartItemSchema],
   sellerProfile: sellerProfileSchema,
   
     // Fields for password reset

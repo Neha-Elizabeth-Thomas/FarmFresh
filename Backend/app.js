@@ -18,6 +18,15 @@ app.use(cors({
 }));
 app.use('/api',router)
 
+// Error handler middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack); // ✅ log actual error
+  res.status(err.statusCode || 500).json({
+    message: err.message || 'Internal Server Error',
+  });
+});
+
+
 connectDB()
 .then(console.log(`db connected successfully url`))
 .catch(err=>{

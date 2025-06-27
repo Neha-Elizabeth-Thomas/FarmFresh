@@ -1,28 +1,46 @@
+// middleware/uploadMiddleware.js
 import multer from 'multer';
-import { storage } from '../configs/cloudinary.js';
+import { govIDProofStorage, productImageStorage } from '../configs/cloudinary.js';
 
 /**
- * Multer middleware configured for Cloudinary.
- * This expects a single file from a form field named 'govIDProof'.
- * On successful upload, req.file will contain the file details from Cloudinary.
+ * Allowed formats: jpg, png, jpeg, pdf
  */
-const upload = multer({ 
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    // You can add more complex file filtering logic here if needed
-    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
-    }
-  },
-  limits: {
-    fileSize: 1024 * 1024 * 5 // 5MB file size limit
+const allowedFormats = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+
+/**
+ * File filter to restrict types
+ */
+const fileFilter = (req, file, cb) => {
+  if (allowedFormats.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error('Invalid file type. Only JPG, PNG, JPEG, and PDF files are allowed.'),
+      false
+    );
   }
-});
+};
 
-// We are exporting a configured middleware instance to handle a single file upload.
-// The field name 'govIDProof' must match the name attribute of the file input in your front-end form.
-const uploadGovID = upload.single('govIDProof');
+const limits = {
+  fileSize: 5 * 1024 * 1024, // 5MB
+};
 
-export default uploadGovID;
+/**
+ * Upload single government ID proof
+ * Field: govIDProof
+ */
+export const uploadGovID = multer({
+  storage: govIDProofStorage,
+  fileFilter,
+  limits,
+}).single('govIDProof');
+
+/**
+ * Upload up to 5 product images
+ * Field: images
+ */
+export const uploadProductImages = multer({
+  storage: productImageStorage,
+  fileFilter,
+  limits,
+}).array('images', 5);

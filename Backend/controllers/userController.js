@@ -1,10 +1,10 @@
-import User from '../models/user.js';
+import User from '../models/userModel.js';
 import asyncHandler from 'express-async-handler'
 import generateToken from '../utils/generateToken.js';
 import crypto from 'crypto'
 import sendEmail from '../utils/sendEmail.js';
 
-export const register=asyncHandler(async (req,res)=>{
+export const registerBuyer=asyncHandler(async (req,res)=>{
     const {name,email,phone,password,confirmPassword}=req.body; 
 
     if(!name || !email || !phone || !password ||!confirmPassword){
@@ -23,7 +23,7 @@ export const register=asyncHandler(async (req,res)=>{
         throw new Error("A User with the same email or phone no already exists")
     }
 
-    const user=User.create({
+    const user=await User.create({
         name,
         email,
         phone,
@@ -32,11 +32,11 @@ export const register=asyncHandler(async (req,res)=>{
 
     if(user){
         res.status(200).json({
+            message:"Buyer registered successfully",
             id:user._id,
             name:user.name,
-            email:user.name,
-            phone:user.phone,
-            token:generateToken(user._id)
+            email:user.email,
+            phone:user.phone
         })
     }else{
         res.status(400)
@@ -45,7 +45,7 @@ export const register=asyncHandler(async (req,res)=>{
 })
 
 
-export const login = asyncHandler(async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -103,7 +103,7 @@ export const logout = asyncHandler(async (req, res) => {
 });
 
 
-export const updateProfile = asyncHandler(async (req, res) => {
+export const updateUserProfile = asyncHandler(async (req, res) => {
   // Find the user by the ID from the token
   const user = await User.findById(req.user._id);
 
@@ -125,8 +125,16 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
     // If the user is a seller, update seller profile fields
     if (user.role.includes('seller') && req.body.sellerProfile) {
-        Object.assign(user.sellerProfile, req.body.sellerProfile);
+      const { storeName, storeDescription, address, deliveryAreas, gstNumber, bankDetails } = req.body.sellerProfile;
+
+      if (storeName) user.sellerProfile.storeName = storeName;
+      if (storeDescription) user.sellerProfile.storeDescription = storeDescription;
+      if (gstNumber) user.sellerProfile.gstNumber = gstNumber;
+      if (address) user.sellerProfile.address = address; // optionally deep merge
+      if (deliveryAreas) user.sellerProfile.deliveryAreas = deliveryAreas;
+      if (bankDetails) user.sellerProfile.bankDetails = bankDetails;
     }
+
 
     const updatedUser = await user.save();
 
@@ -136,9 +144,6 @@ export const updateProfile = asyncHandler(async (req, res) => {
         email: updatedUser.email,
         phone: updatedUser.phone,
         role: updatedUser.role,
-        deliveryAddress: updatedUser.deliveryAddress,
-        sellerProfile: updatedUser.sellerProfile,
-        token: generateToken(updatedUser._id), // Re-issue token in case payload changes
     });
   } else {
     res.status(404);
@@ -260,3 +265,102 @@ export const resetPassword = asyncHandler(async (req, res) => {
     message: 'Password has been reset successfully.',
   });
 });
+
+// @desc    Add or update a delivery address
+// @route   PUT /api/users/address
+// @access  Private
+export const updateUserAddress = asyncHandler(async (req, res) => {
+  const { address, isDefault } = req.body;
+
+  if (!address || typeof address !== 'object') {
+    res.status(400);
+    throw new Error('Invalid address data');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Optional: If isDefault is true, reset other addresses' isDefault
+  if (isDefault) {
+    user.deliveryAddress.forEach(addr => (addr.isDefault = false));
+    address.isDefault = true;
+  }
+
+  // Push new address (no _id needed as we use array of subdocs with no _id)
+  user.deliveryAddress.push(address);
+
+  await user.save();
+  res.status(200).json({ message: 'Address added', addresses: user.deliveryAddress });
+});
+
+
+// @desc    Delete a delivery address by index
+// @route   DELETE /api/users/address/:addressId
+// @access  Private
+export const deleteUserAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const index = parseInt(addressId);
+  if (isNaN(index) || index < 0 || index >= user.deliveryAddress.length) {
+    res.status(400);
+    throw new Error('Invalid address index');
+  }
+
+  user.deliveryAddress.splice(index, 1);
+  await user.save();
+
+  res.status(200).json({ message: 'Address deleted', addresses: user.deliveryAddress });
+});
+
+// @desc    Get logged-in user's profile
+// @route   GET /api/users/profile
+// @access  Private
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('-password');
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  res.status(200).json(user);
+});
+
+export const checkUserStatus = asyncHandler(async (req, res) => {
+  // req.user._id is set by your `protect` middleware (from token)
+  const user = await User.findById(req.user._id).select('-password');
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const response = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+  };
+
+  // If user is a seller, add seller verification status
+  if (user.role.includes('seller')) {
+    response.sellerStatus = {
+      isVerified: user.sellerProfile?.isVerified || false,
+      verifiedAt: user.sellerProfile?.verifiedAt || null,
+    };
+  }
+
+  res.status(200).json(response);
+});
+

@@ -1,7 +1,10 @@
-import User from '../models/user.js'
-import asyncHandler from 'express-async-handler'
-import generateToken from '../utils/generateToken.js';
+// controllers/userController.js
+import User from '../models/userModel.js';
+import asyncHandler from 'express-async-handler';
 
+// @desc    Register a new seller (buyer + seller role)
+// @route   POST /api/users/register-seller
+// @access  Public
 export const registerSeller = asyncHandler(async (req, res) => {
   const {
     name,
@@ -9,27 +12,18 @@ export const registerSeller = asyncHandler(async (req, res) => {
     phone,
     password,
     confirmPassword,
-    role, // optional; we’ll override below anyway
-    sellerProfile, // now expected as an object
-  } = req.body;
-
-  // Basic validation
-  if (!name || !email || !phone || !password || !confirmPassword || !sellerProfile) {
-    res.status(400);
-    throw new Error('Please provide all required fields for seller registration');
-  }
-
-  const {
     storeName,
     storeDescription,
-    address,
     gstNumber,
-    govIDProofURL
-  } = sellerProfile;
+    address, // address should be an object
+    bankDetails, // optional
+    deliveryAreas, // optional array
+  } = req.body;
 
-  if (!storeName || !storeDescription || !address || !gstNumber || !govIDProofURL) {
+  // Basic field validation
+  if (!name || !email || !phone || !password || !confirmPassword || !storeName || !storeDescription || !gstNumber || !address) {
     res.status(400);
-    throw new Error('Please provide all required seller profile fields');
+    throw new Error('All required seller fields must be filled');
   }
 
   if (password !== confirmPassword) {
@@ -37,25 +31,43 @@ export const registerSeller = asyncHandler(async (req, res) => {
     throw new Error('Passwords do not match');
   }
 
-  // Check if user already exists
-  const userExists = await User.findOne({ $or: [{ email }, { phone }] });
-  if (userExists) {
+  // File upload validation (req.file from multer)
+  if (!req.file || !req.file.path) {
+    res.status(400);
+    throw new Error('Government ID proof must be uploaded');
+  }
+
+  const govIDProofURL = req.file.path; // Cloudinary URL
+
+  // Check for existing user
+  const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+  if (existingUser) {
     res.status(400);
     throw new Error('User with this email or phone already exists');
   }
 
-  // Create user
+  // Create user with nested sellerProfile
   const user = await User.create({
     name,
     email,
     phone,
     password,
-    role: ['buyer', 'seller'], // explicitly assign roles
-    sellerProfile
+    role: ['buyer', 'seller'],
+    sellerProfile: {
+      storeName,
+      storeDescription,
+      gstNumber,
+      govIDProofURL,
+      address,
+      bankDetails,
+      deliveryAreas,
+      isVerified: false
+    }
   });
 
   if (user) {
     res.status(201).json({
+      message:"seller successfully registered",
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -65,7 +77,7 @@ export const registerSeller = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(400);
-    throw new Error('Invalid user data for seller');
+    throw new Error('Seller registration failed');
   }
 });
 
