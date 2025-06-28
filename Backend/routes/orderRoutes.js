@@ -6,7 +6,6 @@ import {
   getSellerOrders,
   updateOrderStatusToShipped,
   updateOrderStatusToDelivered,
-  createPaymentSession,
 } from '../controllers/orderController.js';
 import { protect, sellerOnly, adminOnly } from '../middleware/authentication.js';
 
@@ -18,8 +17,6 @@ const router = express.Router();
 // @route   /api/orders
 
 router.route('/').post(protect, createOrder);
-router.route('/:id/pay').post(protect, createPaymentSession); // Create payment intent (e.g., Stripe)
-
 /*============================================
 =           Order Retrieval Routes           =
 ============================================*/

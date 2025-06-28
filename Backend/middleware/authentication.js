@@ -20,7 +20,7 @@ export const protect=asyncHandler(async (req,res,next)=>{
 })
 
 export const sellerOnly=asyncHandler(async (req,res,next)=>{
-    if(req.user && req.user.role.includes('seller')){
+    if(req.user && req.user.role === 'seller'){
         next();
     }else{
         res.status(400);
@@ -30,7 +30,7 @@ export const sellerOnly=asyncHandler(async (req,res,next)=>{
 
 
 export const adminOnly=asyncHandler(async (req,res,next)=>{
-    if(req.user && req.user.role.includes('admin')){
+    if(req.user && req.user.role === 'admin'){
         next();
     }else{
         res.status(400);

@@ -6,27 +6,116 @@ import Review from '../models/reviewModel.js';
 =            PUBLIC CONTROLLERS            =
 ==========================================*/
 
-// @desc    Get all products with filters, search & pagination
+// @desc    Get all products with advanced filters, search, sort & pagination
 // @route   GET /api/products
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const pageSize = Number(req.query.limit) || 10;
+  // --- Pagination ---
+  const pageSize = Number(req.query.limit) || 12; // Default to 12 products per page
   const page = Number(req.query.page) || 1;
-  const keyword = req.query.search
-    ? { product_name: { $regex: req.query.search, $options: 'i' } }
-    : {};
 
-  const filter = {
-    ...keyword,
-    is_active: true
-  };
+  // --- Base Filter Object ---
+  // Start with a base filter that only includes active products
+  const filter = { is_active: true };
 
+  // --- Search Filter ---
+  // Add keyword search for product name to the filter if provided
+  if (req.query.search) {
+    filter.product_name = {
+      $regex: req.query.search,
+      $options: 'i', // Case-insensitive
+    };
+  }
+
+  // --- Category Filter ---
+  // Filter by a specific category or multiple categories
+  // e.g., /api/products?category=Electronics,Books
+  if (req.query.category) {
+    const categories = req.query.category.split(',');
+    filter.category = { $in: categories };
+  }
+  
+  // --- Seller (Brand) Filter ---
+  // Filter by one or more seller IDs
+  // e.g., /api/products?seller=60d5f2a1b9b8f83e8c8b4567
+  if (req.query.seller) {
+    const sellers = req.query.seller.split(',');
+    filter.seller_id = { $in: sellers };
+  }
+
+  // --- Price Range Filter ---
+  // Filter by a minimum and/or maximum price
+  // e.g., /api/products?minPrice=100&maxPrice=500
+  if (req.query.minPrice || req.query.maxPrice) {
+    filter.price = {};
+    if (req.query.minPrice) {
+      filter.price.$gte = parseFloat(req.query.minPrice);
+    }
+    if (req.query.maxPrice) {
+      filter.price.$lte = parseFloat(req.query.maxPrice);
+    }
+  }
+  
+  // --- Rating Filter ---
+  // This is a more complex filter. We first find products that have an average rating
+  // greater than or equal to the specified value.
+  if (req.query.rating) {
+      const minRating = Number(req.query.rating);
+      
+      // 1. Find all reviews and group them by product_id to calculate average rating
+      const productRatings = await Review.aggregate([
+          { $group: { _id: "$product_id", avgRating: { $avg: "$rating" } } },
+          { $match: { avgRating: { $gte: minRating } } }
+      ]);
+      
+      // 2. Get the IDs of the products that match the rating criteria
+      const productIds = productRatings.map(r => r._id);
+      
+      // 3. Add this to our main filter. If productIds is empty, nothing will match.
+      filter._id = { $in: productIds };
+  }
+
+  // --- Sorting ---
+  let sortOptions = {};
+  const sortBy = req.query.sort || 'latest'; // Default sort by latest
+  
+  switch(sortBy) {
+      case 'price-asc':
+          sortOptions = { price: 1 };
+          break;
+      case 'price-desc':
+          sortOptions = { price: -1 };
+          break;
+      case 'name-asc':
+          sortOptions = { product_name: 1 };
+          break;
+      case 'name-desc':
+          sortOptions = { product_name: -1 };
+          break;
+      case 'latest':
+      default:
+          sortOptions = { created_at: -1 };
+          break;
+  }
+
+  // --- Execute Query ---
+  // First, count the total documents that match the final filter
   const count = await Product.countDocuments(filter);
+
+  // Then, find the products with the filter, sort, and pagination
   const products = await Product.find(filter)
+    .populate('seller_id', 'shop_name') // Populate seller's shop name
+    .sort(sortOptions)
     .skip(pageSize * (page - 1))
     .limit(pageSize);
 
-  res.json({ products, page, pages: Math.ceil(count / pageSize), total: count });
+  res.json({
+    products,
+    page,
+    pages: Math.ceil(count / pageSize),
+    total: count,
+  });
 });
+
 
 // @desc    Get a product by ID
 // @route   GET /api/products/:id

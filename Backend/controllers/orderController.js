@@ -64,46 +64,6 @@ export const createOrder = asyncHandler(async (req, res) => {
 });
 
 /*============================================
-=           CREATE PAYMENT SESSION          =
-============================================*/
-// @desc    Create payment session
-// @route   POST /api/orders/:id/pay
-export const createPaymentSession = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
-
-  if (!order || order.user_id.toString() !== req.user._id.toString()) {
-    res.status(404);
-    throw new Error('Order not found or unauthorized');
-  }
-
-  // Simulated Payment Session (replace with Stripe/Razorpay)
-  const platformFee = (0.05 * order.total_amount).toFixed(2);
-  const sellerReceives = (order.total_amount - platformFee).toFixed(2);
-
-  const payment = new Payment({
-    order_id: order._id,
-    user_id: order.user_id,
-    seller_id: order.seller_id,
-    amount: order.total_amount,
-    platform_fee: platformFee,
-    seller_receives: sellerReceives,
-    payment_status: 'success',
-    payment_method: req.body.payment_method || 'COD',
-    transaction_id: 'mock_txn_' + Date.now(),
-  });
-
-  await payment.save();
-
-  order.status = 'paid';
-  await order.save();
-
-  res.status(200).json({
-    message: 'Payment recorded',
-    payment,
-  });
-});
-
-/*============================================
 =              GET ORDER BY ID              =
 ============================================*/
 // @desc    Get a single order by ID

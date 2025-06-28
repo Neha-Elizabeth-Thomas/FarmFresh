@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import Order from '../models/orderModel.js';
 
-/*=========================================
+/*========================================= 
 =            USER MANAGEMENT              =
 =========================================*/
 
@@ -69,7 +69,7 @@ export const deleteUserByAdmin = asyncHandler(async (req, res) => {
 // @desc    Get all sellers
 // @route   GET /api/admin/sellers
 export const getAllSellers = asyncHandler(async (req, res) => {
-  const sellers = await User.find({ role: { $in: ['seller'] } }).select('-password');
+  const sellers = await User.find({role: 'seller'}).select('-password');
   res.json(sellers);
 });
 
@@ -78,7 +78,7 @@ export const getAllSellers = asyncHandler(async (req, res) => {
 export const verifySeller = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
-  if (!user || !user.role.includes('seller')) {
+  if (!user || !user.role === 'seller') {
     res.status(404);
     throw new Error('Seller not found');
   }

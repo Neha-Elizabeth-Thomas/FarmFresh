@@ -124,7 +124,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     }
 
     // If the user is a seller, update seller profile fields
-    if (user.role.includes('seller') && req.body.sellerProfile) {
+    if (user.role === 'seller' && req.body.sellerProfile) {
       const { storeName, storeDescription, address, deliveryAreas, gstNumber, bankDetails } = req.body.sellerProfile;
 
       if (storeName) user.sellerProfile.storeName = storeName;
@@ -354,7 +354,7 @@ export const checkUserStatus = asyncHandler(async (req, res) => {
   };
 
   // If user is a seller, add seller verification status
-  if (user.role.includes('seller')) {
+  if (user.role === 'seller') {
     response.sellerStatus = {
       isVerified: user.sellerProfile?.isVerified || false,
       verifiedAt: user.sellerProfile?.verifiedAt || null,

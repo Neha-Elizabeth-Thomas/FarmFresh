@@ -102,10 +102,9 @@ const userSchema=new mongoose.Schema({
     },
     deliveryAddress:[addrSchema],
     role: {
-    type: [String],
-    enum: ['buyer', 'seller', 'admin'],
-    default: ['buyer']
-  },
+    type: String,
+    default: 'buyer'
+    },
   cart: [cartItemSchema],
   sellerProfile: sellerProfileSchema,
   

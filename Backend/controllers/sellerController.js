@@ -52,7 +52,7 @@ export const registerSeller = asyncHandler(async (req, res) => {
     email,
     phone,
     password,
-    role: ['buyer', 'seller'],
+    role:'seller',
     sellerProfile: {
       storeName,
       storeDescription,
