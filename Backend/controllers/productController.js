@@ -5,7 +5,7 @@ import Review from '../models/reviewModel.js';
 /*==========================================
 =            PUBLIC CONTROLLERS            =
 ==========================================*/
-
+ 
 // @desc    Get all products with advanced filters, search, sort & pagination
 // @route   GET /api/products
 export const getAllProducts = asyncHandler(async (req, res) => {
@@ -212,8 +212,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
   product.category = req.body.category || product.category;
   product.price = req.body.price || product.price;
   product.quantity = req.body.quantity || product.quantity;
-  if (req.file?.path) {
-    product.product_image = req.file.path;
+  if (req.files) {
+    const imageUrls = req.files.map(file => file.path); // from multer-cloudinary or similar
+    product.product_image = imageUrls;
   }
 
   const updatedProduct = await product.save();
