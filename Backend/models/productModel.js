@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
   category: { type: String, required: true, index: true },
   price: { type: mongoose.Schema.Types.Decimal128, required: true },
   quantity: { type: Number, required: true, default: 0 },
+  unit: { type: String, required: true, default: "kilos" },
   product_image: { type: [String], required: true }, // URL to the image
   is_active: { type: Boolean, default: true },
 }, {
