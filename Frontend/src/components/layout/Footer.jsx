@@ -6,7 +6,7 @@ const Footer = () => {
   const footerLinkClasses = "text-gray-500 hover:text-green-600 transition-colors duration-300";
 
   return (
-    <footer className="bg-gray-100 dark:bg-gray-900 pt-16 pb-8">
+    <footer className="bg-gray-100 dark:bg-gray-800 pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Farm Fresh Info */}

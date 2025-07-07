@@ -8,7 +8,7 @@ const Header = () => {
     const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-50 transition-colors">
+    <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo and Main Nav */}
         <div className="flex items-center space-x-8">
