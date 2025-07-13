@@ -3,33 +3,53 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { setCredentials } from '../features/auth/authSlice';
 import loginIllustration from '../assets/images/login_illustration.jpg'; 
+import axiosInstance from '../api/axiosConfig';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('buyer'); // Default role
-  
+  const [loading, setLoading] = useState(false);
+  const [error,setError]=useState('');
+    
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      // The backend login logic currently only uses email and password.
-      // The 'role' field is included here for UI purposes as per the design.
-      console.log("Attempting to log in with:", { email, password, role });
-      
-      const mockUserData = {
-        user: { name: 'John Doe', email: email, role: role },
-        token: 'mock-jwt-token-12345'
-      };
+      setLoading(true);
+      const { data } = await axiosInstance.post(
+        '/user/login',
+        { email, password },
+        { withCredentials: true }
+      );
 
-      dispatch(setCredentials(mockUserData));
-      navigate('/');
+      dispatch(setCredentials({ user: data }));
+
+      // 🔁 Redirect based on role
+      switch (data.role) {
+        case 'admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'seller':
+          navigate('/seller/dashboard');
+          break;
+        case 'buyer':
+        default:
+          navigate('/');
+          break;
+      }
+
     } catch (err) {
-      console.error('Failed to login:', err);
+      setError(err.response?.data?.message || 'Login failed');
+      console.error('Login error:', err);
+      alert(err.response?.data?.message || 'Login failed');
+    }finally {
+      setLoading(false);
     }
   };
+
 
 
 
@@ -69,18 +89,6 @@ const LoginPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
-                {/* Role Dropdown */}
-                <div>
-                    <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                        <option value="buyer">Buyer</option>
-                        <option value="seller">Seller</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
                 {/* Password Input */}
                 <div>
                   <input
@@ -96,9 +104,10 @@ const LoginPage = () => {
                 <div>
                   <button
                     type="submit"
+                    disabled={loading}
                     className="w-full px-4 py-3 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
                   >
-                    Login
+                    {loading ? 'Logging in...' : 'Login'}
                   </button>
                 </div>
               </form>

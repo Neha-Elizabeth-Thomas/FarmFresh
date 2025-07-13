@@ -190,7 +190,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   // 4. Create the reset URL for the email
   // This URL points to your front-end application's reset password page
-  const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
+  const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
 
   const message = `You are receiving this email because you (or someone else) have requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl} \n\nIf you did not request this, please ignore this email. This link is valid for 15 minutes.`;
 

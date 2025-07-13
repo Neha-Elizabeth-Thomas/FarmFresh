@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { setCredentials } from '../features/auth/authSlice';
-import loginIllustration from '../assets/images/login_illustration.jpg'; 
+import loginIllustration from '../../assets/images/login_illustration.jpg'; 
+import axiosInstance from '../../api/axiosConfig';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -11,13 +10,13 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(''); // Clear previous messages
+    setMessage('');
 
     if (password !== confirmPassword) {
       setMessage('Passwords do not match');
@@ -25,44 +24,41 @@ const RegisterPage = () => {
     }
 
     try {
-      // In a real app, you would call your API here to register the user.
-      // const userData = await register({ name, email, password, phone }).unwrap();
-      
-      console.log("Attempting to register with:", { name, email, password, phone });
-      
-      // For now, we'll simulate a successful registration and login.
-      const mockUserData = {
-        user: { name, email, role: 'buyer' },
-        token: 'mock-jwt-token-for-new-user'
-      };
+      setLoading(true);
+      const { data } = await axiosInstance.post('/user/register/buyer', {
+        name,
+        email,
+        phone,
+        password,
+        confirmPassword,
+      });
 
-      dispatch(setCredentials(mockUserData));
-      navigate('/'); // Redirect to home page on successful registration
+      // On successful registration, redirect to login page
+      alert('Registration successful! Please login.');
+      navigate('/login');
     } catch (err) {
       console.error('Failed to register:', err);
-      setMessage(err.data?.message || 'Registration failed');
+      setMessage(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // A dummy illustration. You would replace this with your actual SVG or image file.
   const RegisterIllustration = () => (
     <img 
-        src={loginIllustration}
-        alt="Farm Fresh Registration Illustration"
-        className="w-full h-auto"
+      src={loginIllustration}
+      alt="Farm Fresh Registration Illustration"
+      className="w-full h-auto"
     />
   );
 
   return (
     <div className="min-h-[calc(100vh-150px)] bg-white dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="container mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-8">
-        
-        {/* Left Side: Illustration */}
         <div className="hidden lg:flex justify-center">
-            <RegisterIllustration />
+          <RegisterIllustration />
         </div>
 
-        {/* Right Side: Registration Form */}
         <div className="flex justify-center">
           <div className="relative w-full max-w-md">
             <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 transform -skew-y-6 rounded-lg z-0"></div>
@@ -114,9 +110,10 @@ const RegisterPage = () => {
                 />
                 <button
                   type="submit"
+                  disabled={loading}
                   className="w-full px-4 py-3 font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
                 >
-                  Register
+                  {loading ? 'Registering...' : 'Register'}
                 </button>
               </form>
               <div className="text-center mt-6 text-sm text-gray-600 dark:text-gray-300">

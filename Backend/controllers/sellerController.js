@@ -46,24 +46,29 @@ export const registerSeller = asyncHandler(async (req, res) => {
     throw new Error('User with this email or phone already exists');
   }
 
+  // Convert stringified fields to actual objects if necessary
+  const parsedAddress = typeof address === 'string' ? JSON.parse(address) : address;
+  const parsedBankDetails = typeof bankDetails === 'string' ? JSON.parse(bankDetails) : bankDetails;
+
   // Create user with nested sellerProfile
   const user = await User.create({
-    name,
-    email,
-    phone,
-    password,
-    role:'seller',
-    sellerProfile: {
-      storeName,
-      storeDescription,
-      gstNumber,
-      govIDProofURL,
-      address,
-      bankDetails,
-      deliveryAreas,
-      isVerified: false
-    }
-  });
+  name,
+  email,
+  phone,
+  password,
+  role: 'seller',
+  sellerProfile: {
+    storeName,
+    storeDescription,
+    gstNumber,
+    govIDProofURL,
+    address: parsedAddress, 
+    bankDetails: parsedBankDetails,
+    deliveryAreas,
+    isVerified: false
+  }
+});
+
 
   if (user) {
     res.status(201).json({
