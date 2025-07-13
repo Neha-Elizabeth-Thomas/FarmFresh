@@ -5,32 +5,22 @@ import router from './routes/index.js'
 import connectDB from './configs/db.js'
 import cookieParser from 'cookie-parser'
 
-
 dotenv.config()
 const app = express()
 const port = process.env.PORT
 
 app.use(express.json())
 app.use(cookieParser())
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://farm-fresh-ashy.vercel.app/', // 🔁 Replace with your actual Vercel URL
-];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true, // Allow cookies
-  })
-);
+app.use(cors({
+  origin: [
+    'http://localhost:5173', // Your Vite dev server
+    'https://farm-fresh-ashy.vercel.app/', // Production frontend
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // If using cookies/auth tokens
+}));
 app.use('/api',router)
 
 // Error handler middleware
