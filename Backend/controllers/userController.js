@@ -63,7 +63,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.cookie('jwt', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'strict', // Prevent CSRF
+      sameSite: 'None', // Prevent CSRF
       maxAge: 60 * 60 * 1000 // 7 days
     });
 
