@@ -9,18 +9,17 @@ dotenv.config()
 const app = express()
 const port = process.env.PORT
 
-app.use(express.json())
-app.use(cookieParser())
-
 app.use(cors({
   origin: [
     'http://localhost:5173', // Your Vite dev server
-    'https://farm-fresh-ashy.vercel.app/', // Production frontend
+    'https://farm-fresh-ashy.vercel.app', // Production frontend
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // If using cookies/auth tokens
 }));
+app.use(express.json())
+app.use(cookieParser())
 app.use('/api',router)
 
 // Error handler middleware
