@@ -7,6 +7,7 @@ import {
   getAllSellers,
   verifySeller,
   getAllOrders,
+  getAdminStats
 } from '../controllers/adminController.js';
 import { protect, adminOnly } from '../middleware/authentication.js';
 
