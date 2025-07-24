@@ -15,6 +15,7 @@ import SellerDashboardPage from './pages/seller/SellerDashboardPage';
 import AddOrEditProductPage from './pages/seller/AddorEditProductPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ManageProductsPage from './pages/seller/ManageProductsPage';
 
 // 👇 Import route guards
 import PrivateRoute from './routes/PrivateRoute';
@@ -37,6 +38,7 @@ function App() {
             <Route path="/product/:productId" element={<ProductDetailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:resetToken" element={<ResetPasswordPage />} />
+            <Route path="/search" element={<CategoryPage />} />
 
             {/* ✅ Protected (logged-in) Routes */}
             <Route element={<PrivateRoute />}>
@@ -49,6 +51,7 @@ function App() {
             <Route element={<RoleRoute allowedRoles={['seller']} />}>
               <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
               <Route path="/seller/add-product" element={<AddOrEditProductPage />} />
+              <Route path="/seller/products" element={<ManageProductsPage />} />
               <Route path="/profile/seller" element={<SellerProfilePage />} />
             </Route>
 

@@ -15,5 +15,6 @@ router.use('/admin',adminRoutes)
 router.use('/orders',orderRoutes)
 router.use('/cart',cartRoutes)
 router.use('/products',productRoutes)
+router.use('/payments',paymentRoutes)
 
 export default router

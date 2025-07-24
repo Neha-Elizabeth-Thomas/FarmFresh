@@ -42,4 +42,6 @@ router.route('/sellers/:id/verify').put(verifySeller); // Admin verifies a selle
 
 router.route('/orders').get(getAllOrders); // Admin can see all orders in the system
 
+router.get('/stats', getAdminStats);
+
 export default router;

@@ -14,6 +14,16 @@ const productSchema = new mongoose.Schema({
   unit: { type: String, required: true, default: "kilos" },
   product_image: { type: [String], required: true }, // URL to the image
   is_active: { type: Boolean, default: true },
+  isMustBuy: {
+    type: Boolean,
+    default: false,
+    index: true, // Add index for faster querying
+  },
+  isBestSeller: {
+    type: Boolean,
+    default: false,
+    index: true, // Add index for faster querying
+  },
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

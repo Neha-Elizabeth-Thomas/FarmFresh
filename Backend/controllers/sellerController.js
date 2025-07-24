@@ -1,6 +1,7 @@
 // controllers/userController.js
 import User from '../models/userModel.js';
 import asyncHandler from 'express-async-handler';
+import Product from '../models/productModel.js';
 
 // @desc    Register a new seller (buyer + seller role)
 // @route   POST /api/users/register-seller
@@ -98,4 +99,13 @@ export const getAllSellers=asyncHandler(async (req,res)=>{
     }
 })
 
+/**
+ * @desc    Get all products for the logged-in seller
+ * @route   GET /api/products/seller
+ * @access  Private/Seller
+ */
+export const getSellerProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({ seller_id: req.user._id }).sort({ created_at: -1 });
+  res.json(products);
+});
 

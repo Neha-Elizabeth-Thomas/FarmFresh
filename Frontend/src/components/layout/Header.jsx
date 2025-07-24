@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logOut } from '../../features/auth/authSlice';
 import axiosInstance from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 
 
 const Header = () => {
@@ -13,6 +14,8 @@ const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const { itemCount } = useCart();
 
   const handleLogout = async () => {
     try {
@@ -21,6 +24,14 @@ const Header = () => {
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchKeyword.trim()) {
+      navigate(`/search?keyword=${searchKeyword}`);
+      setSearchKeyword(''); // Clear input after search
     }
   };
 
@@ -36,16 +47,14 @@ const Header = () => {
           {/* 🌐 NAVBAR visible only if user is logged in */}
           {userInfo && (
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/shop" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Shop</Link>
-              <Link to="/on-sale" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">On Sale</Link>
-
               {/* You can also add role-based routes here */}
               {userInfo.user?.role === 'admin' && (
                 <Link to="/admin/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-green-600">Admin</Link>
               )}
               {userInfo.user?.role === 'seller' && (
                 <>
-                <Link to="/seller/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-green-600">Seller</Link>
+                <Link to="/seller/products" className="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Your Products</Link>
+                <Link to="/seller/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-green-600">Home</Link>
                 <Link to="/seller/add-product" className="text-gray-600 dark:text-gray-300 hover:text-green-600">Add New Product</Link>
                 </>
               )}
@@ -57,16 +66,24 @@ const Header = () => {
         </div>
 
         {/* Search */}
+        {userInfo && userInfo.user?.role === 'buyer' && (
         <div className="flex-1 max-w-xl mx-8 hidden md:block">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for products..."
-              className="w-full py-2 pl-4 pr-10 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors"
-            />
-            <FiSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <form onSubmit={handleSearchSubmit}>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search for products..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  className="w-full py-2 pl-4 pr-10 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <FiSearch />
+                </button>
+              </div>
+            </form>
           </div>
-        </div>
+          )}
 
         {/* Actions */}
         <div className="flex items-center space-x-5">
@@ -84,7 +101,7 @@ const Header = () => {
             <Link to="/cart" className="relative text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">
               <FiShoppingCart size={24} />
               <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                3
+                {itemCount}
               </span>
             </Link>
           )}

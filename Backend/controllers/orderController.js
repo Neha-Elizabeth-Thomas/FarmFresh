@@ -97,7 +97,14 @@ export const getOrderById = asyncHandler(async (req, res) => {
 // @desc    Get logged in user's orders
 // @route   GET /api/orders/myorders
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user_id: req.user._id }).sort({ created_at: -1 });
+  const orders = await Order.find({ user_id: req.user._id })
+    .sort({ created_at: -1 })
+    // Populate the product details for each item in the order
+    .populate({
+      path: 'items.product_id', // The path to the field you want to populate
+      select: 'product_name product_image' // Select only the fields you need for the frontend
+    });
+    
   res.json(orders);
 });
 
@@ -142,4 +149,60 @@ export const updateOrderStatusToDelivered = asyncHandler(async (req, res) => {
   order.status = 'delivered';
   await order.save();
   res.json({ message: 'Order marked as delivered' });
+});
+
+/**
+ * @desc    Get aggregated data for the seller dashboard
+ * @route   GET /api/dashboard/seller
+ * @access  Private/Seller
+ */
+export const getSellerDashboardData = asyncHandler(async (req, res) => {
+  const sellerId = req.user._id;
+
+  // --- 1. Top-level Statistics ---
+  const totalOrders = await Order.countDocuments({ seller_id: sellerId });
+  const totalProducts = await Product.countDocuments({ seller_id: sellerId });
+
+  const salesData = await Order.aggregate([
+    { $match: { seller_id: sellerId, status: { $in: ['paid', 'shipped', 'delivered'] } } },
+    { $group: { _id: null, totalSell: { $sum: "$total_amount" } } }
+  ]);
+  const totalSell = salesData.length > 0 ? salesData[0].totalSell : 0;
+
+  // --- 2. Order Summary ---
+  const orderStatusSummary = await Order.aggregate([
+      { $match: { seller_id: sellerId } },
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+  ]);
+
+  const orderSummary = {
+      pending: orderStatusSummary.find(s => s._id === 'pending')?.count || 0,
+      shipped: orderStatusSummary.find(s => s._id === 'shipped')?.count || 0,
+      delivered: orderStatusSummary.find(s => s._id === 'delivered')?.count || 0,
+      total: totalOrders,
+  };
+
+  // --- 3. Recent Orders (Buy Requests) ---
+  const recentOrders = await Order.find({ seller_id: sellerId })
+    .populate({
+        path: 'items.product_id',
+        select: 'product_name'
+    })
+    .sort({ created_at: -1 })
+    .limit(5);
+  
+  // --- 4. Seller's Products ---
+   const sellerProducts = await Product.find({ seller_id: sellerId }).limit(5);
+
+
+  res.json({
+    stats: {
+      totalOrders: { value: totalOrders, change: 0 }, // Change calculation would require historical data
+      totalSell: { value: totalSell, change: 0 },
+      totalProducts: { value: totalProducts, change: 0 },
+    },
+    orderSummary,
+    recentOrders,
+    yourProducts: sellerProducts,
+  });
 });

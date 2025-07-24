@@ -62,8 +62,8 @@ export const loginUser = asyncHandler(async (req, res) => {
 
     res.cookie('jwt', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'None', // Prevent CSRF
+      secure: process.env.NODE_ENV !== 'development', // true in production
+      sameSite: process.env.NODE_ENV !== 'development' ? 'None' : 'strict', // 'None' in production
       maxAge: 60 * 60 * 1000 // 7 days
     });
 

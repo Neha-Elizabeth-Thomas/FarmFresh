@@ -1,42 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FiStar, FiChevronLeft, FiChevronRight, FiMinus, FiPlus } from 'react-icons/fi';
+import { FiStar, FiChevronLeft, FiChevronRight, FiMinus, FiPlus,FiLoader } from 'react-icons/fi';
 import ProductCarousel from '../components/products/ProductCarousel'; // Reusing from homepage
-
-// --- Mock Data ---
-const productData = {
-  id: 'prod123',
-  name: 'Organic Onion',
-  images: [
-    'https://placehold.co/500x500/f0f0f0/333?text=Onion+1',
-    'https://placehold.co/500x500/e0e0e0/333?text=Onion+2',
-    'https://placehold.co/500x500/d0d0d0/333?text=Onion+3',
-    'https://placehold.co/500x500/c0c0c0/333?text=Onion+4',
-  ],
-  price: 260,
-  originalPrice: 300,
-  discount: 13,
-  rating: 4.5,
-  reviewsCount: 151,
-  description: 'Organic Onion straight from the farms. Freshly picked and packed with care to bring you the best quality.',
-  sizes: ['500g', '1kg', '2kg'],
-  reviews: [
-    { id: 1, name: 'Samantha D.', date: 'August 16, 2023', rating: 5, comment: 'Absolutely fresh and amazing quality. Will buy again!' },
-    { id: 2, name: 'Alex M.', date: 'August 16, 2023', rating: 5, comment: 'Great value for money. The onions were crisp.' },
-    { id: 3, name: 'Ethan R.', date: 'August 16, 2023', rating: 4, comment: 'Good quality, but delivery was a bit late.' },
-    { id: 4, name: 'Olivia P.', date: 'August 15, 2023', rating: 5, comment: 'Perfect for my daily cooking. Highly recommended.' },
-    { id: 5, name: 'Liam K.', date: 'August 15, 2023', rating: 4, comment: 'They are good, fresh as described.' },
-    { id: 6, name: 'Ava H.', date: 'August 15, 2023', rating: 5, comment: 'Best organic onions I have found online.' },
-  ],
-};
-
-const recommendedProducts = [
-    { id: 5, name: 'Organic Potato', price: 180, rating: 4, reviews: 112, image: 'https://placehold.co/300x300/f0f0f0/333?text=Potato' },
-    { id: 6, name: 'Organic Tomato', price: 210, rating: 5, reviews: 210, image: 'https://placehold.co/300x300/f0f0f0/333?text=Tomato' },
-    { id: 7, name: 'Organic Garlic', price: 350, rating: 5, reviews: 180, image: 'https://placehold.co/300x300/f0f0f0/333?text=Garlic' },
-    { id: 8, name: 'Organic Ginger', price: 400, rating: 4, reviews: 95, image: 'https://placehold.co/300x300/f0f0f0/333?text=Ginger' },
-];
-
+import axiosInstance from '../api/axiosConfig';
+import { useCart } from '../context/CartContext';
 
 // --- Sub-Components ---
 
@@ -65,32 +32,31 @@ const ProductImageGallery = ({ images }) => {
 
 const ProductInfo = ({ product }) => {
     const [quantity, setQuantity] = useState(1);
+    const { addToCart } = useCart(); // Get the addToCart function from context
 
     const increment = () => setQuantity(q => q + 1);
     const decrement = () => setQuantity(q => (q > 1 ? q - 1 : 1));
 
+    const handleAddToCart = () => {
+        // Create a product object with the quantity to add to the cart
+        const productToAdd = { ...product, quantity };
+        addToCart(productToAdd);
+    };
+
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{product.product_name}</h1>
             <div className="flex items-center mt-2">
-                <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => <FiStar key={i} className={i < Math.round(product.rating) ? 'fill-current' : ''} />)}
-                </div>
-                <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">{product.rating} ({product.reviewsCount} reviews)</span>
+                <div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <FiStar key={i} className={i < Math.round(product.rating || 0) ? 'fill-current' : ''} />)}</div>
+                <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">{product.rating || 0} ({product.reviewsCount || 0} reviews)</span>
             </div>
             <div className="flex items-baseline space-x-2 mt-4">
                 <p className="text-3xl font-bold text-green-600">₹{product.price}/kg</p>
-                <p className="text-xl text-gray-400 line-through">₹{product.originalPrice}</p>
-                <span className="text-sm font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-md">{product.discount}% OFF</span>
+                {/* Add logic for originalPrice and discount if available in your model */}
             </div>
             <p className="mt-4 text-gray-600 dark:text-gray-300">{product.description}</p>
             
-            <div className="mt-6">
-                <label htmlFor="size-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Select the packet size</label>
-                <select id="size-select" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    {product.sizes.map(size => <option key={size}>{size}</option>)}
-                </select>
-            </div>
+            {/* FIX: Removed the 'Select packet size' dropdown as 'sizes' does not exist on the product model */}
 
             <div className="mt-6">
                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total price for the selected qty</p>
@@ -98,12 +64,11 @@ const ProductInfo = ({ product }) => {
             </div>
 
             <div className="flex items-center space-x-4 mt-6">
-                <div className="flex items-center border border-gray-300 rounded-md">
-                    <button onClick={decrement} className="p-3"><FiMinus /></button>
-                    <span className="px-4 font-semibold">{quantity}</span>
-                    <button onClick={increment} className="p-3"><FiPlus /></button>
-                </div>
-                <button className="flex-1 py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors">
+                <div className="flex items-center border border-gray-300 rounded-md"><button onClick={decrement} className="p-3"><FiMinus /></button><span className="px-4 font-semibold">{quantity}</span><button onClick={increment} className="p-3"><FiPlus /></button></div>
+                <button 
+                    onClick={handleAddToCart}
+                    className="flex-1 py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700"
+                >
                     Add to Cart
                 </button>
             </div>
@@ -139,42 +104,70 @@ const ProductTabs = ({ product }) => {
 const ReviewSection = ({ reviews }) => (
     <div>
         <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-2">
-                <button className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 rounded-md">Latest</button>
-                <button className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 rounded-md">Filter</button>
-            </div>
+            <div className="flex items-center space-x-2"><button className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 rounded-md">Latest</button></div>
             <button className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">Write a Review</button>
         </div>
         <div className="space-y-6">
-            {reviews.map(review => (
-                <div key={review.id} className="border-b border-gray-200 dark:border-gray-700 pb-6">
-                    <div className="flex items-center mb-2">
-                        <div className="flex text-yellow-400">
-                            {[...Array(5)].map((_, i) => <FiStar key={i} className={i < review.rating ? 'fill-current' : ''} />)}
-                        </div>
-                    </div>
-                    <p className="font-semibold text-gray-800 dark:text-white">{review.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Posted on {review.date}</p>
+            {reviews && reviews.length > 0 ? reviews.map(review => (
+                <div key={review._id} className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div className="flex text-yellow-400 mb-2">{[...Array(5)].map((_, i) => <FiStar key={i} className={i < review.rating ? 'fill-current' : ''} />)}</div>
+                    <p className="font-semibold text-gray-800 dark:text-white">{review.user_id.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Posted on {new Date(review.created_at).toLocaleDateString()}</p>
                     <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
                 </div>
-            ))}
-        </div>
-        <div className="text-center mt-8">
-            <button className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">Load More Reviews</button>
+            )) : <p>No reviews yet. Be the first to write one!</p>}
         </div>
     </div>
 );
+
 
 
 // --- Main ProductDetailPage Component ---
 
 const ProductDetailPage = () => {
   const { productId } = useParams();
-  // In a real app, you'd fetch product data based on productId
-  const product = productData; 
+  const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      try {
+        setLoading(true);
+        // Fetch both main product and related products concurrently
+        const [productRes,reviewsRes, relatedRes] = await Promise.all([
+          axiosInstance.get(`/products/${productId}`),
+          axiosInstance.get(`/products/${productId}/reviews`), 
+          axiosInstance.get(`/products/${productId}/related`)
+        ]);
+        
+        setProduct(productRes.data);
+        setReviews(reviewsRes.data);
+        setRelatedProducts(relatedRes.data);
+
+      } catch (err) {
+        setError('Failed to fetch product details. Please try again.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [productId]); // Refetch if the productId in the URL changes
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><FiLoader className="animate-spin text-5xl text-green-600" /></div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 p-8">{error}</div>;
+  }
 
   if (!product) {
-    return <div>Product not found</div>;
+    return <div className="text-center p-8">Product not found.</div>;
   }
 
   return (
@@ -183,26 +176,28 @@ const ProductDetailPage = () => {
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         <Link to="/" className="hover:text-green-600">Home</Link>
         <span className="mx-2">/</span>
-        <Link to="/category/veggies" className="hover:text-green-600">Veggies</Link>
+        <Link to={`/category/${product.category}`} className="hover:text-green-600 capitalize">{product.category}</Link>
         <span className="mx-2">/</span>
-        <span className="capitalize">{product.name}</span>
+        <span className="capitalize">{product.product_name}</span>
       </div>
 
       {/* Main Product Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <ProductImageGallery images={product.images} />
+        {/* Assuming product_image is a single URL, we wrap it in an array */}
+        <ProductImageGallery images={product.product_image} />
         <ProductInfo product={product} />
       </div>
 
       {/* Tabs Section */}
-      <ProductTabs product={product} />
+      <ProductTabs product={product} reviews={reviews} />
 
       {/* Recommended Products Section */}
       <div className="mt-16">
-        <ProductCarousel title="You might also like" products={recommendedProducts} />
+        <ProductCarousel title="You might also like" products={relatedProducts} />
       </div>
     </div>
   );
 };
+
 
 export default ProductDetailPage;

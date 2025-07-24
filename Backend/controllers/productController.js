@@ -30,7 +30,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   // Filter by a specific category or multiple categories
   // e.g., /api/products?category=Electronics,Books
   if (req.query.category) {
-    const categories = req.query.category.split(',');
+    const categories = req.query.category.split(',').map(cat => new RegExp(`^${cat}$`, 'i'));
     filter.category = { $in: categories };
   }
   
@@ -275,4 +275,93 @@ export const createProductReview = asyncHandler(async (req, res) => {
 
   await review.save();
   res.status(201).json({ message: 'Review submitted successfully' });
+});
+
+/**
+ * @desc    Get latest, high-rated reviews for the homepage
+ * @route   GET /api/reviews/homepage
+ * @access  Public
+ */
+export const getHomepageReviews = asyncHandler(async (req, res) => {
+  // Fetch up to 5 reviews that have a rating of 4 or higher
+  // Sort them by creation date to get the most recent ones
+  const reviews = await Review.find({ rating: { $gte: 4 } })
+    .sort({ created_at: -1 })
+    .limit(5)
+    .populate('user_id', 'name'); // Populate the user's name from the User model
+
+  res.json(reviews);
+});
+
+
+/**
+ * @desc    Get all reviews for a single product
+ * @route   GET /api/reviews/:productId
+ * @access  Public
+ */
+export const getReviewsForProduct = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({ product_id: req.params.productId })
+    .populate('user_id', 'name') // Populate the user's name for display
+    .sort({ created_at: -1 }); // Sort by newest first
+
+  res.json(reviews);
+});
+
+// @desc    Set homepage flags for a product (Admin only)
+// @route   PUT /api/products/:id/flags
+// @access  Private/Admin
+export const setProductFlags = asyncHandler(async (req, res) => {
+  const { isMustBuy, isBestSeller } = req.body;
+
+  const product = await Product.findById(req.params.id);
+
+  if (product) {
+    product.isMustBuy = isMustBuy ?? product.isMustBuy;
+    product.isBestSeller = isBestSeller ?? product.isBestSeller;
+
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
+  } else {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+});
+
+// @desc    Get products for homepage sections
+// @route   GET /api/products/homepage
+// @access  Public
+export const getHomepageProducts = asyncHandler(async (req, res) => {
+  // Fetch up to 8 "Must Buy" products
+  const mustBuy = await Product.find({ isMustBuy: true, is_active: true }).limit(8);
+
+  // Fetch up to 8 "Best Seller" products
+  const bestSellers = await Product.find({ isBestSeller: true, is_active: true }).limit(8);
+
+  res.json({ mustBuy, bestSellers });
+});
+
+
+/**
+ * @desc    Get related products based on the current product's category
+ * @route   GET /api/products/:id/related
+ * @access  Public
+ */
+export const getRelatedProducts = asyncHandler(async (req, res) => {
+  // First, find the current product to determine its category
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+
+  // Then, find other products in the same category
+  // Exclude the current product itself from the results
+  const relatedProducts = await Product.find({
+    category: product.category,
+    _id: { $ne: req.params.id }, // $ne means "not equal"
+    is_active: true,
+  }).limit(4); // Limit to 4 related products
+
+  res.json(relatedProducts);
 });

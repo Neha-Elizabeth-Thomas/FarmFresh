@@ -1,33 +1,7 @@
-import React from 'react';
-import { FiBox, FiDollarSign, FiShoppingCart, FiMoreVertical, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import React, { useEffect, useState } from 'react';
+import { FiBox, FiDollarSign, FiShoppingCart, FiMoreVertical, FiArrowUp, FiArrowDown, FiLoader } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-
-// --- Mock Data (Consistent with your schemas) ---
-const dashboardStats = {
-  totalOrders: { value: 400, change: 14 },
-  totalSell: { value: 4250000, change: -8 }, // Stored in paise/cents, formatted to Lakhs
-  totalProducts: { value: 452, change: 25 },
-};
-
-const orderSummaryData = {
-  pending: 160,
-  shipped: 120,
-  delivered: 120,
-  total: 400,
-};
-
-const recentOrders = [
-  { _id: 'SB001', user_id: { name: 'Rohan S.' }, items: [{ product_name: 'Organic Apples', quantity: '500 KG' }], total_amount: 20000, shippingAddress: { city: 'Mumbai' }, created_at: '7 days ago', status: 'pending' },
-  { _id: 'SB002', user_id: { name: 'Priya M.' }, items: [{ product_name: 'Fresh Mangoes', quantity: '300 KG' }], total_amount: 15000, shippingAddress: { city: 'Delhi' }, created_at: '5 days ago', status: 'pending' },
-  { _id: 'SB003', user_id: { name: 'Amit K.' }, items: [{ product_name: 'Basmati Rice', quantity: '800 KG' }], total_amount: 40000, shippingAddress: { city: 'Bangalore' }, created_at: '3 days ago', status: 'pending' },
-];
-
-const yourProducts = [
-    { _id: 'PROD001', product_name: 'Organic Apples', category: 'Fruits', quantity: 500, price: 20, mfg_date: '2023-06-01', exp_date: '2023-08-01' },
-    { _id: 'PROD002', product_name: 'Fresh Mangoes', category: 'Fruits', quantity: 300, price: 20, mfg_date: '2023-07-01', exp_date: '2023-07-20' },
-    { _id: 'PROD003', product_name: 'Basmati Rice', category: 'Grains', quantity: 800, price: 20, mfg_date: '2023-01-01', exp_date: '2024-01-01' },
-];
-
+import axiosInstance from '../../api/axiosConfig';
 
 // --- Sub-Components --
 
@@ -119,21 +93,47 @@ const RecentOrdersTable = ({ orders }) => (
 // --- Main SellerDashboardPage Component ---
 
 const SellerDashboardPage = () => {
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                const { data } = await axiosInstance.get('/orders/seller');
+                setDashboardData(data);
+            } catch (err) {
+                setError('Failed to load dashboard data. Please try again later.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900"><FiLoader className="animate-spin text-5xl text-green-600" /></div>;
+    }
+
+    if (error) {
+        return <div className="text-center text-red-500 p-8">{error}</div>;
+    }
+
     return (
-        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
+        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-200">
+            {/* You can add a dedicated DashboardHeader component here */}
             <main className="p-6 space-y-6">
-                {/* Top Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <StatCard title="Total Orders" value={dashboardStats.totalOrders.value} change={dashboardStats.totalOrders.change} icon={<FiShoppingCart size={24}/>} />
-                    <StatCard title="Total Sell" value={dashboardStats.totalSell.value} change={dashboardStats.totalSell.change} icon={<FiDollarSign size={24}/>} isCurrency={true} />
-                    <StatCard title="Total Products" value={dashboardStats.totalProducts.value} change={dashboardStats.totalProducts.change} icon={<FiBox size={24}/>} />
+                    <StatCard title="Total Orders" value={dashboardData.stats.totalOrders.value} change={dashboardData.stats.totalOrders.change} icon={<FiShoppingCart size={24}/>} />
+                    <StatCard title="Total Sell" value={dashboardData.stats.totalSell.value} change={dashboardData.stats.totalSell.change} icon={<FiDollarSign size={24}/>} isCurrency={true} />
+                    <StatCard title="Total Products" value={dashboardData.stats.totalProducts.value} change={dashboardData.stats.totalProducts.change} icon={<FiBox size={24}/>} />
                 </div>
-                {/* Mid-level Summaries */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1"><OrderSummaryCard data={orderSummaryData} /></div>
+                    <div className="lg:col-span-1"><OrderSummaryCard data={dashboardData.orderSummary} /></div>
                     <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                         <h3 className="font-semibold">Payment Summary</h3>
-                        {/* Placeholder for chart */}
                         <div className="h-48 mt-4 bg-gray-100 dark:bg-gray-700 rounded flex items-end justify-around p-4">
                             <div className="w-12 bg-green-400" style={{height: '80%'}}></div>
                             <div className="w-12 bg-green-400" style={{height: '95%'}}></div>
@@ -141,12 +141,12 @@ const SellerDashboardPage = () => {
                         </div>
                     </div>
                 </div>
-                {/* Data Tables */}
-                <RecentOrdersTable orders={recentOrders} />
-                {/* You would add the "Your Products" table here */}
+                <RecentOrdersTable orders={dashboardData.recentOrders} />
+                {/* Add the "Your Products" table here, passing `dashboardData.yourProducts` */}
             </main>
         </div>
     );
 };
+
 
 export default SellerDashboardPage;

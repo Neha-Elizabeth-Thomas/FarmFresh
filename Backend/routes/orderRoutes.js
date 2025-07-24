@@ -6,6 +6,7 @@ import {
   getSellerOrders,
   updateOrderStatusToShipped,
   updateOrderStatusToDelivered,
+  getSellerDashboardData
 } from '../controllers/orderController.js';
 import { protect, sellerOnly, adminOnly } from '../middleware/authentication.js';
 
@@ -23,7 +24,7 @@ router.route('/').post(protect, createOrder);
 // @route   /api/orders
 
 router.route('/myorders').get(protect, getMyOrders); // Buyer gets their own orders
-router.route('/seller').get(protect, sellerOnly, getSellerOrders); // Seller gets their sales
+router.get('/seller', protect, sellerOnly, getSellerDashboardData);
 router.route('/:id').get(protect, getOrderById); // User/seller gets a specific order they are part of
 
 /*============================================

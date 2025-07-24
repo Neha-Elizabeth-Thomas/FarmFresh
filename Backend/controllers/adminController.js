@@ -104,3 +104,27 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 
   res.json(orders);
 });
+
+/**
+ * @desc    Get dashboard statistics
+ * @route   GET /api/admin/stats
+ * @access  Private/Admin
+ */
+export const getAdminStats = asyncHandler(async (req, res) => {
+  const totalUsers = await User.countDocuments({});
+  const totalSellers = await User.countDocuments({ role: 'seller' });
+  const pendingSellers = await User.countDocuments({ role: 'seller', 'sellerProfile.isVerified': false });
+
+  const salesData = await Order.aggregate([
+    { $match: { status: { $in: ['paid', 'shipped', 'delivered'] } } },
+    { $group: { _id: null, totalRevenue: { $sum: '$total_amount' } } }
+  ]);
+  const totalRevenue = salesData.length > 0 ? salesData[0].totalRevenue : 0;
+
+  res.json({
+    totalUsers,
+    totalSellers,
+    totalRevenue: totalRevenue.toString(),
+    pendingSellers,
+  });
+});
