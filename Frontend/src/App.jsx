@@ -16,10 +16,15 @@ import AddOrEditProductPage from './pages/seller/AddorEditProductPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ManageProductsPage from './pages/seller/ManageProductsPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminManageSellersPage from './pages/admin/AdminManageSellersPage';
+import AdminManageProductsPage from './pages/admin/AdminManageProductsPage';
 
 // 👇 Import route guards
 import PrivateRoute from './routes/PrivateRoute';
 import RoleRoute from './routes/RoleRoute';
+import AdminRoute from './routes/AdminRoute';
 
 
 function App() {
@@ -55,7 +60,16 @@ function App() {
               <Route path="/profile/seller" element={<SellerProfilePage />} />
             </Route>
 
-            {/* Add more RoleRoute for admin, buyer if needed */}
+
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                <Route path="/admin/sellers" element={<AdminManageSellersPage />} />
+                <Route path="/admin/products" element={<AdminManageProductsPage />} />
+                {/* Add more admin routes here */}
+              </Route>
+            </Route>
+
           </Routes>
         </main>
         <Footer />

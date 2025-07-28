@@ -7,7 +7,8 @@ import {
   getAllSellers,
   verifySeller,
   getAllOrders,
-  getAdminStats
+  getAdminStats,
+  getAdminDashboardDetails,
 } from '../controllers/adminController.js';
 import { protect, adminOnly } from '../middleware/authentication.js';
 
@@ -44,5 +45,7 @@ router.route('/sellers/:id/verify').put(verifySeller); // Admin verifies a selle
 router.route('/orders').get(getAllOrders); // Admin can see all orders in the system
 
 router.get('/stats', getAdminStats);
+
+router.get('/dashboard-details', getAdminDashboardDetails);
 
 export default router;

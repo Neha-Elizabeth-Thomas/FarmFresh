@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../api/axiosConfig'; // Adjust the import if using axiosInstance
-import { FiEdit, FiSave, FiLoader,FiXCircle } from 'react-icons/fi';
+import { FiEdit, FiSave, FiLoader,FiXCircle, FiCheckCircle } from 'react-icons/fi';
 
 const SellerProfilePage = () => {
   const [user, setUser] = useState(null);

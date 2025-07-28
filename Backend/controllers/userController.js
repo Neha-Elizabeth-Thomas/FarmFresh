@@ -50,6 +50,11 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
 
+  if (user.role === 'seller' && !user.sellerProfile.isVerified) {
+    res.status(403); // 403 Forbidden is a more appropriate status code
+    throw new Error('Your seller account is pending verification. You will be notified upon approval.');
+  }
+
   if (!user) {
     res.status(400);
     throw new Error("Invalid Email");

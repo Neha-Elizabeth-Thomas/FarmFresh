@@ -9,7 +9,7 @@ const AdminRoute = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
   // Check if user is authenticated and has the 'admin' role
-  return userInfo && userInfo.role === 'admin' ? (
+  return userInfo && userInfo.user.role === 'admin' ? (
     <Outlet />
   ) : (
     <Navigate to="/login" replace />
